@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Licznik punktów</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+
+<!-- iOS PWA support -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+/* --- KOLORY I RESET --- */
+:root {
+  --bg: #0f172a;
+  --card: #111827;
+  --accent: #22c55e;
+  --accent-soft: #16a34a33;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --danger: #ef4444;
+  --danger-soft: #ef444433;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* --- GŁÓWNY KONTENER --- */
+.app {
+  width: 100%;
+  max-width: 480px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* --- LANDSCAPE MODE --- */
+@media (orientation: landscape) {
+  .app {
+    max-width: 100%;
+    padding: 10px 20px;
+  }
+  .players {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .player-card {
+    min-height: 200px;
+  }
+}
+
+/* --- HEADER --- */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+}
+
+.title {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+/* --- BUTTONY --- */
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: #020617;
+  color: var(--text);
+  box-shadow: 0 0 0 1px #1f2937;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #022c22;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
+/* --- LISTA GRACZY --- */
+.players {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* --- KARTA GRACZA --- */
+.player-card {
+  background: radial-gradient(circle at top left, #1f2937 0, #020617 60%);
+  border-radius: 18px;
+  padding: 12px 14px;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.6);
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 10px;
+  align-items: center;
+  position: relative;
+}
+
+/* --- TRYB GŁOSOWY WIZUALNY --- */
+.player-card.listening {
+  outline: 3px solid var(--accent);
+  box-shadow: 0 0 20px rgba(34,197,94,0.6);
+}
+
+/* --- INPUT IMIENIA --- */
+.player-name-input {
+  width: 100%;
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: #020617;
+  color: var(--text);
+  box-shadow: 0 0 0 1px #1f2937;
+}
+
+/* --- PUNKTY --- */
+.score {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.controls {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.btn-score {
+  padding: 10px 0;
+  border-radius: 999px;
+}
+
+.btn-plus {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.btn-minus {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* --- STOPKA --- */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.total {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.danger {
+  color: var(--danger);
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="title">Licznik punktów</div>
+      <div class="subtitle">Tryb mobilny + głos</div>
+    </div>
+    <div class="top-actions">
+      <button class="btn-ghost" id="fullscreenBtn">⛶</button>
+      <button class="btn-accent" id="addPlayerBtn">+ Gracz</button>
+    </div>
+  </header>
+
+  <main class="players" id="playersContainer"></main>
+
+  <div class="footer">
+    <div>Suma punktów: <span class="total" id="totalScore">0</span></div>
+    <div class="danger" id="resetAllBtn">Wyzeruj wszystko</div>
+  </div>
+</div>
+
+<script>
+/* --- LOGIKA --- */
+const playersContainer = document.getElementById("playersContainer");
+const addPlayerBtn = document.getElementById("addPlayerBtn");
+const totalScoreEl = document.getElementById("totalScore");
+const resetAllBtn = document.getElementById("resetAllBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+let players = [];
+let playerIdCounter = 1;
+
+/* --- SPEECH RECOGNITION --- */
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+
+if (SpeechRecognition) {
+  recognizer = new SpeechRecognition();
+  recognizer.lang = "pl-PL";
+  recognizer.interimResults = false;
+}
+
+/* --- PARSER KOMEND GŁOSOWYCH --- */
+function parseVoiceCommand(text) {
+  text = text.toLowerCase();
+
+  const numbers = {
+    "zero":0,"jeden":1,"dwa":2,"trzy":3,"cztery":4,"piec":5,"pięć":5,
+    "szesc":6,"sześć":6,"siedem":7,"osiem":8,"dziewiec":9,"dziewięć":9,
+    "dziesiec":10,"dziesięć":10
+  };
+
+  let value = null;
+
+  // liczby słowne
+  for (const word in numbers) {
+    if (text.includes(word)) value = numbers[word];
+  }
+
+  // liczby cyfrowe
+  const match = text.match(/\d+/);
+  if (match) value = parseInt(match[0]);
+
+  if (value === null) return null;
+
+  if (text.includes("dodaj") || text.includes("plus")) return +value;
+  if (text.includes("odejmij") || text.includes("minus")) return -value;
+
+  return null;
+}
+
+/* --- RENDER --- */
+function renderPlayers() {
+  playersContainer.innerHTML = "";
+
+  players.forEach(player => {
+    const card = document.createElement("div");
+    card.className = "player-card";
+    card.dataset.id = player.id;
+
+    /* --- OBSŁUGA PRZYTRZYMANIA DO GŁOSU --- */
+    let holdTimer = null;
+
+    card.addEventListener("touchstart", () => {
+      holdTimer = setTimeout(() => startVoiceMode(player.id, card), 600);
+    });
+
+    card.addEventListener("touchend", () => {
+      clearTimeout(holdTimer);
+    });
+
+    /* --- HEADER --- */
+    const nameInput = document.createElement("input");
+    nameInput.className = "player-name-input";
+    nameInput.value = player.name;
+    nameInput.addEventListener("input", e => {
+      player.name = e.target.value;
+    });
+
+    const meta = document.createElement("div");
+    meta.className = "player-meta";
+    meta.innerHTML = `<span>ID: ${player.id}</span>
+                      <span class="danger" data-remove="${player.id}">Usuń</span>`;
+
+    const header = document.createElement("div");
+    header.appendChild(nameInput);
+    header.appendChild(meta);
+
+    /* --- SCORE --- */
+    const scoreBox = document.createElement("div");
+    scoreBox.style.textAlign = "right";
+    scoreBox.innerHTML = `
+      <div class="score-label">Punkty</div>
+      <div class="score" id="score-${player.id}">${player.score}</div>
+    `;
+
+    /* --- BUTTONY --- */
+    const controls = document.createElement("div");
+    controls.className = "controls";
+
+    const buttons = [
+      { label: "-10", delta: -10, cls: "btn-score btn-minus" },
+      { label: "-1", delta: -1, cls: "btn-score btn-minus" },
+      { label: "+1", delta: 1, cls: "btn-score btn-plus" },
+      { label: "+10", delta: 10, cls: "btn-score btn-plus" },
+    ];
+
+    buttons.forEach(b => {
+      const btn = document.createElement("button");
+      btn.textContent = b.label;
+      btn.className = b.cls;
+      btn.addEventListener("click", () => changeScore(player.id, b.delta));
+      controls.appendChild(btn);
+    });
+
+    card.appendChild(header);
+    card.appendChild(scoreBox);
+    card.appendChild(controls);
+
+    playersContainer.appendChild(card);
+  });
+
+  // obsługa usuwania
+  playersContainer.querySelectorAll("[data-remove]").forEach(el => {
+    el.addEventListener("click", () => {
+      const id = parseInt(el.dataset.remove);
+      players = players.filter(p => p.id !== id);
+      updateTotal();
+      renderPlayers();
+    });
+  });
+}
+
+/* --- ZMIANA PUNKTÓW --- */
+function changeScore(id, delta) {
+  const p = players.find(x => x.id === id);
+  if (!p) return;
+  p.score += delta;
+  document.getElementById("score-" + id).textContent = p.score;
+  updateTotal();
+}
+
+/* --- SUMA --- */
+function updateTotal() {
+  totalScoreEl.textContent = players.reduce((s,p)=>s+p.score,0);
+}
+
+/* --- DODAWANIE GRACZA --- */
+function addPlayer() {
+  players.push({
+    id: playerIdCounter++,
+    name: "Gracz " + players.length,
+    score: 0
+  });
+  renderPlayers();
+  updateTotal();
+}
+
+/* --- RESET --- */
+function resetAll() {
+  if (!players.length) return;
+  if (!confirm("Wyzerować punkty wszystkich graczy?")) return;
+  players.forEach(p => p.score = 0);
+  renderPlayers();
+  updateTotal();
+}
+
+/* --- FULLSCREEN --- */
+function toggleFullscreen() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement) el.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+/* --- TRYB GŁOSOWY --- */
+function startVoiceMode(playerId, cardEl) {
+  if (!recognizer) {
+    alert("Twoja przeglądarka nie obsługuje rozpoznawania mowy.");
+    return;
+  }
+
+  cardEl.classList.add("listening");
+
+  recognizer.start();
+
+  recognizer.onresult = e => {
+    const text = e.results[0][0].transcript;
+    const delta = parseVoiceCommand(text);
+
+    if (delta !== null) {
+      changeScore(playerId, delta);
+    } else {
+      alert("Nie rozumiem komendy: " + text);
+    }
+  };
+
+  recognizer.onend = () => {
+    cardEl.classList.remove("listening");
+  };
+}
+
+/* --- EVENTY --- */
+addPlayerBtn.addEventListener("click", addPlayer);
+resetAllBtn.addEventListener("click", resetAll);
+fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+/* --- START --- */
+addPlayer();
+addPlayer();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("SW zarejestrowany"))
+    .catch(err => console.error("SW error:", err));
+}
+</script>
+</body>
+</html>
