@@ -139,7 +139,7 @@ button:active {
 .score {
   font-size: 2rem;
   font-weight: 700;
-  text-align: right;
+  text-align: right; user-select: none; 
 }
 
 .controls {
