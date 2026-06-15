@@ -98,7 +98,8 @@ function renderPlayers() {
     /* --- OBSŁUGA PRZYTRZYMANIA DO GŁOSU --- */
     let holdTimer = null;
 
-    card.addEventListener("touchstart", () => {
+    card.addEventListener("touchstart", e => {
+      e.preventDefault();
       holdTimer = setTimeout(() => startVoiceMode(player.id, card), 600);
     });
 
