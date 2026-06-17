@@ -2,6 +2,7 @@ const CACHE_NAME = "score-app-v1";
 const FILES = [
   "index.html",
   "style.css",
+  "script.js",
   "manifest.json",
   "service-worker.js",
   "icons/icon-192.png",
