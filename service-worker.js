@@ -1,4 +1,4 @@
-const CACHE_NAME = "score-app-v2";
+const CACHE_NAME = "score-app-v3";
 const FILES = [
   "./",
   "index.html",

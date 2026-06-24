@@ -140,7 +140,7 @@ function renderPlayers() {
         nameInput.className = "player-name-input";
         nameInput.value = player.name;
         nameInput.placeholder = "Nazwa gracza";
-        nameInput.addEventListener("input", e => { player.name = e.target.value; });
+        nameInput.addEventListener("input", e => { player.name = e.target.value; saveState(); });
 
         const removeBtn = document.createElement("span");
         removeBtn.className = "player-remove";
@@ -149,6 +149,7 @@ function renderPlayers() {
             players = players.filter(p => p.id !== player.id);
             updateTotal();
             renderPlayers();
+            saveState();
         });
 
         header.appendChild(nameInput);
@@ -189,6 +190,25 @@ function renderPlayers() {
     applyGridLayout();
 }
 
+/* --- PERSYSTENCJA --- */
+function saveState() {
+    localStorage.setItem("scoreApp", JSON.stringify({ players, playerIdCounter }));
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem("scoreApp");
+        if (!raw) return false;
+        const { players: saved, playerIdCounter: counter } = JSON.parse(raw);
+        if (Array.isArray(saved) && saved.length > 0) {
+            players = saved;
+            playerIdCounter = counter || saved.length + 1;
+            return true;
+        }
+    } catch (e) {}
+    return false;
+}
+
 /* --- ZMIANA PUNKTÓW --- */
 function changeScore(id, delta) {
     const p = players.find(x => x.id === id);
@@ -196,6 +216,7 @@ function changeScore(id, delta) {
     p.score += delta;
     document.getElementById("score-" + id).textContent = p.score;
     updateTotal();
+    saveState();
 }
 
 /* --- SUMA --- */
@@ -213,6 +234,7 @@ function addPlayer() {
     });
     renderPlayers();
     updateTotal();
+    saveState();
 }
 
 /* --- RESET --- */
@@ -222,6 +244,7 @@ function resetAll() {
     players.forEach(p => p.score = 0);
     renderPlayers();
     updateTotal();
+    saveState();
 }
 
 /* --- FULLSCREEN --- */
@@ -257,7 +280,7 @@ function startVoiceMode(playerId, cardEl) {
             players.forEach(p => changeScore(p.id, action.delta));
         } else if (action.type === "rename") {
             const p = players.find(x => x.id === playerId);
-            if (p) { p.name = action.name; renderPlayers(); }
+            if (p) { p.name = action.name; renderPlayers(); saveState(); }
         }
     };
 
@@ -293,8 +316,13 @@ window.addEventListener("resize", applyGridLayout);
 })();
 
 /* --- START --- */
-addPlayer();
-addPlayer();
+if (!loadState()) {
+    addPlayer();
+    addPlayer();
+} else {
+    renderPlayers();
+    updateTotal();
+}
 
 
 /* --- rejestracja na telefonie jako aplikacja --- */
