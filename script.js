@@ -20,32 +20,54 @@ if (SpeechRecognition) {
 }
 
 /* --- PARSER KOMEND GŁOSOWYCH --- */
+// Returns: { type: 'score', delta } | { type: 'score_all', delta } | { type: 'rename', name } | null
 function parseVoiceCommand(text) {
-    text = text.toLowerCase();
+    text = text.toLowerCase().trim();
 
+    // --- ZMIANA NAZWY ---
+    // "nazwij X", "nazwij na X", "zmień nazwę na X", "zmień nazwę gracza na X"
+    const renameKeywords = ["zmień nazwę gracza", "zmień nazwę", "nazwij gracza", "nazwij"];
+    for (const kw of renameKeywords) {
+        if (text.includes(kw)) {
+            let rest = text.slice(text.indexOf(kw) + kw.length).trim();
+            rest = rest.replace(/^(na|gracza)\s+/, "").trim();
+            if (rest) return { type: "rename", name: rest.charAt(0).toUpperCase() + rest.slice(1) };
+        }
+    }
+
+    // --- LICZBY ---
     const numbers = {
-        "zero": 0, "jeden": 1, "dwa": 2, "trzy": 3, "cztery": 4, "piec": 5, "pięć": 5,
-        "szesc": 6, "sześć": 6, "siedem": 7, "osiem": 8, "dziewiec": 9, "dziewięć": 9,
-        "dziesiec": 10, "dziesięć": 10
+        "zero": 0, "jeden": 1, "dwa": 2, "trzy": 3, "cztery": 4,
+        "pięć": 5, "piec": 5, "sześć": 6, "szesc": 6, "siedem": 7, "osiem": 8,
+        "dziewięć": 9, "dziewiec": 9, "dziesięć": 10, "dziesiec": 10,
+        "jedenaście": 11, "jedenascie": 11, "dwanaście": 12, "dwanascie": 12,
+        "trzynaście": 13, "czternaście": 14, "piętnaście": 15, "pietnascie": 15,
+        "szesnaście": 16, "siedemnaście": 17, "osiemnaście": 18, "dziewiętnaście": 19,
+        "dwadzieścia": 20, "dwadziescia": 20, "trzydzieści": 30, "trzydziesci": 30,
+        "czterdzieści": 40, "czterdziesci": 40, "pięćdziesiąt": 50, "piecdziesiat": 50,
+        "sto": 100,
     };
 
     let value = null;
-
-    // liczby słowne
     for (const word in numbers) {
         if (text.includes(word)) value = numbers[word];
     }
-
-    // liczby cyfrowe
     const match = text.match(/\d+/);
     if (match) value = parseInt(match[0]);
 
     if (value === null) return null;
 
-    if (text.includes("dodaj") || text.includes("plus")) return +value;
-    if (text.includes("odejmij") || text.includes("minus")) return -value;
+    const add = text.includes("dodaj") || text.includes("plus");
+    const sub = text.includes("odejmij") || text.includes("minus");
+    if (!add && !sub) return null;
+    const delta = add ? +value : -value;
 
-    return null;
+    // --- WSZYSCY GRACZE ---
+    if (text.includes("wszystkim") || text.includes("wszystkich")) {
+        return { type: "score_all", delta };
+    }
+
+    return { type: "score", delta };
 }
 
 /* --- GRID LAYOUT --- */
@@ -220,12 +242,20 @@ function startVoiceMode(playerId, cardEl) {
 
     recognizer.onresult = e => {
         const text = e.results[0][0].transcript;
-        const delta = parseVoiceCommand(text);
+        const action = parseVoiceCommand(text);
 
-        if (delta !== null) {
-            changeScore(playerId, delta);
-        } else {
+        if (!action) {
             alert("Nie rozumiem komendy: " + text);
+            return;
+        }
+
+        if (action.type === "score") {
+            changeScore(playerId, action.delta);
+        } else if (action.type === "score_all") {
+            players.forEach(p => changeScore(p.id, action.delta));
+        } else if (action.type === "rename") {
+            const p = players.find(x => x.id === playerId);
+            if (p) { p.name = action.name; renderPlayers(); }
         }
     };
 
@@ -239,6 +269,18 @@ addPlayerBtn.addEventListener("click", addPlayer);
 resetAllBtn.addEventListener("click", resetAll);
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 window.addEventListener("resize", applyGridLayout);
+
+/* --- AUTO FULLSCREEN on first gesture --- */
+(function () {
+    let requested = false;
+    function tryFullscreen() {
+        if (requested || document.fullscreenElement) return;
+        requested = true;
+        document.documentElement.requestFullscreen().catch(() => { requested = false; });
+    }
+    document.addEventListener("touchstart", tryFullscreen, { once: true });
+    document.addEventListener("click",      tryFullscreen, { once: true });
+})();
 
 /* --- START --- */
 addPlayer();
