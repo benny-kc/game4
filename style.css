@@ -116,6 +116,7 @@ button:active {
 
 /* --- PLAYER CARD --- */
 .player-card {
+  position: relative;
   border-radius: 22px;
   overflow: hidden;
   background: var(--card);
@@ -124,6 +125,34 @@ button:active {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* --- SCORE PARTICLES --- */
+.score-particle {
+  position: absolute;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 20;
+  animation: particle-fly ease-out both;
+  will-change: transform, opacity;
+}
+
+.score-particle--plus {
+  color: var(--player-color);
+  text-shadow: 0 0 12px var(--player-color), 0 0 24px var(--player-color);
+}
+
+.score-particle--minus {
+  color: var(--danger);
+  text-shadow: 0 0 12px var(--danger), 0 0 24px rgba(244, 63, 94, 0.6);
+}
+
+@keyframes particle-fly {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  12%  { opacity: 1; transform: translate(-50%, -50%) scale(1.25); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.35) rotate(var(--rot)); }
 }
 
 /* colored top stripe = player identity */

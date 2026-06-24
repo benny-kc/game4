@@ -209,12 +209,46 @@ function loadState() {
     return false;
 }
 
+/* --- PARTICLES --- */
+function spawnParticles(cardEl, delta) {
+    const count = Math.min(Math.abs(delta), 10);
+    const isPos = delta > 0;
+    const scoreEl = cardEl.querySelector('.score');
+    const cardRect  = cardEl.getBoundingClientRect();
+    const scoreRect = scoreEl.getBoundingClientRect();
+
+    const cx = scoreRect.left - cardRect.left + scoreRect.width  / 2;
+    const cy = scoreRect.top  - cardRect.top  + scoreRect.height / 2;
+
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('span');
+        el.className = 'score-particle ' + (isPos ? 'score-particle--plus' : 'score-particle--minus');
+        el.textContent = isPos ? '+' : '−';
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = 38 + Math.random() * 58;          // 38–96 px travel
+        const dx    = Math.cos(angle) * dist;
+        const dy    = Math.sin(angle) * dist;
+        const size  = 0.85 + Math.random() * 0.85;      // 0.85–1.7 rem
+        const dur   = 900 + Math.random() * 1600;        // 0.9–2.5 s
+        const delay = Math.random() * 300;               // 0–300 ms stagger
+        const rot   = (Math.random() - 0.5) * 80;       // ±40 deg spin
+
+        el.style.cssText = `left:${cx}px;top:${cy}px;--dx:${dx}px;--dy:${dy}px;--rot:${rot}deg;font-size:${size}rem;animation-duration:${dur}ms;animation-delay:${delay}ms;`;
+
+        cardEl.appendChild(el);
+        setTimeout(() => el.remove(), dur + delay + 50);
+    }
+}
+
 /* --- ZMIANA PUNKTÓW --- */
 function changeScore(id, delta) {
     const p = players.find(x => x.id === id);
     if (!p) return;
     p.score += delta;
-    document.getElementById("score-" + id).textContent = p.score;
+    const scoreEl = document.getElementById("score-" + id);
+    scoreEl.textContent = p.score;
+    spawnParticles(scoreEl.closest('.player-card'), delta);
     updateTotal();
     saveState();
 }
