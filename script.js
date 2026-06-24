@@ -127,10 +127,27 @@ function renderPlayers() {
 
         /* --- PRZYTRZYMANIE DO GŁOSU --- */
         let holdTimer = null;
-        card.addEventListener("touchstart", () => {
+        let touchOriginX = 0, touchOriginY = 0;
+        const HOLD_MOVE_LIMIT = 10; // px — more than this = scroll intent, not hold
+
+        card.addEventListener("touchstart", e => {
+            const t = e.touches[0];
+            touchOriginX = t.clientX;
+            touchOriginY = t.clientY;
             holdTimer = setTimeout(() => startVoiceMode(player.id, card), 600);
         });
-        card.addEventListener("touchend", () => clearTimeout(holdTimer));
+        card.addEventListener("touchmove", e => {
+            if (holdTimer === null) return;
+            const t = e.touches[0];
+            const dx = t.clientX - touchOriginX;
+            const dy = t.clientY - touchOriginY;
+            if (dx * dx + dy * dy > HOLD_MOVE_LIMIT * HOLD_MOVE_LIMIT) {
+                clearTimeout(holdTimer);
+                holdTimer = null;
+            }
+        });
+        card.addEventListener("touchend",    () => { clearTimeout(holdTimer); holdTimer = null; });
+        card.addEventListener("touchcancel", () => { clearTimeout(holdTimer); holdTimer = null; });
 
         /* --- KOLOROWY NAGŁÓWEK --- */
         const header = document.createElement("div");
