@@ -56,55 +56,55 @@ function renderPlayers() {
         const card = document.createElement("div");
         card.className = "player-card";
         card.dataset.id = player.id;
+        card.dataset.color = player.colorIndex;
 
-        /* --- OBSŁUGA PRZYTRZYMANIA DO GŁOSU --- */
+        /* --- PRZYTRZYMANIE DO GŁOSU --- */
         let holdTimer = null;
-
         card.addEventListener("touchstart", () => {
             holdTimer = setTimeout(() => startVoiceMode(player.id, card), 600);
         });
+        card.addEventListener("touchend", () => clearTimeout(holdTimer));
 
-        card.addEventListener("touchend", () => {
-            clearTimeout(holdTimer);
-        });
+        /* --- KOLOROWY NAGŁÓWEK --- */
+        const header = document.createElement("div");
+        header.className = "player-header";
 
-        /* --- HEADER --- */
         const nameInput = document.createElement("input");
         nameInput.className = "player-name-input";
         nameInput.value = player.name;
-        nameInput.addEventListener("input", e => {
-            player.name = e.target.value;
+        nameInput.placeholder = "Nazwa gracza";
+        nameInput.addEventListener("input", e => { player.name = e.target.value; });
+
+        const removeBtn = document.createElement("span");
+        removeBtn.className = "player-remove";
+        removeBtn.textContent = "Usuń";
+        removeBtn.addEventListener("click", () => {
+            players = players.filter(p => p.id !== player.id);
+            updateTotal();
+            renderPlayers();
         });
 
-        const meta = document.createElement("div");
-        meta.className = "player-meta";
-        meta.innerHTML = `<span>ID: ${player.id}</span>
-                      <span class="danger" data-remove="${player.id}">Usuń</span>`;
-
-        const header = document.createElement("div");
         header.appendChild(nameInput);
-        header.appendChild(meta);
+        header.appendChild(removeBtn);
 
-        /* --- SCORE --- */
-        const scoreBox = document.createElement("div");
-        scoreBox.style.textAlign = "right";
-        scoreBox.innerHTML = `
-      <div class="score-label">Punkty</div>
-      <div class="score" id="score-${player.id}">${player.score}</div>
-    `;
+        /* --- WYNIK --- */
+        const scoreSection = document.createElement("div");
+        scoreSection.className = "player-score-section";
+        scoreSection.innerHTML = `
+            <div class="score" id="score-${player.id}">${player.score}</div>
+            <div class="score-label">Punkty</div>
+        `;
 
-        /* --- BUTTONY --- */
+        /* --- PRZYCISKI --- */
         const controls = document.createElement("div");
         controls.className = "controls";
 
-        const buttons = [
-            { label: "-10", delta: -10, cls: "btn-score btn-minus" },
-            { label: "-1", delta: -1, cls: "btn-score btn-minus" },
-            { label: "+1", delta: 1, cls: "btn-score btn-plus" },
-            { label: "+10", delta: 10, cls: "btn-score btn-plus" },
-        ];
-
-        buttons.forEach(b => {
+        [
+            { label: "−10", delta: -10, cls: "btn-score btn-minus" },
+            { label: "−1",  delta:  -1, cls: "btn-score btn-minus" },
+            { label: "+1",  delta:   1, cls: "btn-score btn-plus"  },
+            { label: "+10", delta:  10, cls: "btn-score btn-plus"  },
+        ].forEach(b => {
             const btn = document.createElement("button");
             btn.textContent = b.label;
             btn.className = b.cls;
@@ -113,20 +113,10 @@ function renderPlayers() {
         });
 
         card.appendChild(header);
-        card.appendChild(scoreBox);
+        card.appendChild(scoreSection);
         card.appendChild(controls);
 
         playersContainer.appendChild(card);
-    });
-
-    // obsługa usuwania
-    playersContainer.querySelectorAll("[data-remove]").forEach(el => {
-        el.addEventListener("click", () => {
-            const id = parseInt(el.dataset.remove);
-            players = players.filter(p => p.id !== id);
-            updateTotal();
-            renderPlayers();
-        });
     });
 }
 
@@ -148,8 +138,9 @@ function updateTotal() {
 function addPlayer() {
     players.push({
         id: playerIdCounter++,
-        name: "Gracz " + players.length,
-        score: 0
+        name: "Gracz " + (players.length + 1),
+        score: 0,
+        colorIndex: players.length % 8
     });
     renderPlayers();
     updateTotal();
