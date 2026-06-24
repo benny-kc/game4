@@ -1,13 +1,43 @@
-# Claude Code
+# ── Claude Code ──────────────────────────────────────────────
 .claude/settings.local.json
 
-# OS
-.DS_Store
-Thumbs.db
+# ── Environment / secrets ────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.secret
+secrets.json
+credentials.json
+config.local.*
 
-# Editor
+# ── Private keys & certificates ──────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.der
+
+# ── OS junk ──────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Editor / IDE ─────────────────────────────────────────────
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# Node (if ever used)
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+
+# ── Node (if ever used) ──────────────────────────────────────
 node_modules/
+.npm/
