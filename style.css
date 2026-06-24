@@ -91,6 +91,20 @@ button:active {
   padding: 10px 12px;
 }
 
+.btn-remove-player {
+  background: transparent;
+  color: var(--danger);
+  opacity: 0.45;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.btn-remove-player.active {
+  opacity: 1;
+  background: var(--danger-soft);
+}
+
 /* --- PLAYERS LIST --- */
 .players {
   display: grid;
@@ -139,6 +153,7 @@ button:active {
 }
 
 .player-remove {
+  display: none;
   flex-shrink: 0;
   color: rgba(255, 255, 255, 0.75);
   cursor: pointer;
@@ -150,6 +165,10 @@ button:active {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   transition: background 0.15s, color 0.15s;
+}
+
+.app.remove-mode .player-remove {
+  display: block;
 }
 
 .player-remove:active {

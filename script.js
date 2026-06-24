@@ -2,12 +2,14 @@
 /* --- LOGIKA --- */
 const playersContainer = document.getElementById("playersContainer");
 const addPlayerBtn = document.getElementById("addPlayerBtn");
+const removePlayerBtn = document.getElementById("removePlayerBtn");
 const totalScoreEl = document.getElementById("totalScore");
 const resetAllBtn = document.getElementById("resetAllBtn");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let players = [];
 let playerIdCounter = 1;
+let removeMode = false;
 
 /* --- SPEECH RECOGNITION --- */
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -264,8 +266,16 @@ function startVoiceMode(playerId, cardEl) {
     };
 }
 
+/* --- TRYB USUWANIA --- */
+function toggleRemoveMode() {
+    removeMode = !removeMode;
+    document.querySelector(".app").classList.toggle("remove-mode", removeMode);
+    removePlayerBtn.classList.toggle("active", removeMode);
+}
+
 /* --- EVENTY --- */
 addPlayerBtn.addEventListener("click", addPlayer);
+removePlayerBtn.addEventListener("click", toggleRemoveMode);
 resetAllBtn.addEventListener("click", resetAll);
 fullscreenBtn.addEventListener("click", toggleFullscreen);
 window.addEventListener("resize", applyGridLayout);
