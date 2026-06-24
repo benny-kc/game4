@@ -28,11 +28,12 @@ body {
 .app {
   width: 100%;
   max-width: 500px;
-  padding: 16px 14px 20px;
+  padding: 12px 14px 10px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-height: 100dvh;
+  gap: 10px;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* --- HEADER --- */
@@ -92,11 +93,11 @@ button:active {
 
 /* --- PLAYERS LIST --- */
 .players {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: grid;
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
+  gap: 8px;
+  overflow: hidden;
 }
 
 /* --- PLAYER CARD --- */
@@ -106,6 +107,9 @@ button:active {
   background: var(--card);
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* colored top stripe = player identity */
@@ -155,13 +159,17 @@ button:active {
 
 /* --- SCORE SECTION --- */
 .player-score-section {
-  padding: 20px 16px 10px;
-  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 6px 16px;
   user-select: none;
 }
 
 .score {
-  font-size: 4.5rem;
+  font-size: var(--score-size, 4rem);
   font-weight: 800;
   line-height: 1;
   color: var(--player-color);
@@ -178,17 +186,17 @@ button:active {
 
 /* --- SCORE CONTROLS --- */
 .controls {
-  padding: 6px 12px 14px;
+  padding: 4px 10px 8px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
+  gap: 5px;
 }
 
 .btn-score {
-  padding: 13px 0;
-  border-radius: 14px;
-  font-size: 0.95rem;
-  font-weight: 700;
+  padding: 6px 0;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
   background: rgba(255, 255, 255, 0.05);
 }
 
@@ -253,12 +261,6 @@ button:active {
 @media (orientation: landscape) {
   .app {
     max-width: 100%;
-    padding: 10px 24px 16px;
-  }
-
-  .players {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 12px;
+    padding: 8px 24px 8px;
   }
 }

@@ -48,6 +48,49 @@ function parseVoiceCommand(text) {
     return null;
 }
 
+/* --- GRID LAYOUT --- */
+function getGridDimensions(n) {
+    const portrait = window.innerHeight >= window.innerWidth;
+    // [cols, rows] lookup — portrait prefers tall stacks, landscape prefers wide rows
+    const table = portrait
+        ? [[1,1],[1,1],[1,2],[1,3],[2,2],[2,3],[2,3],[3,3],[3,3],[3,3]]
+        : [[1,1],[1,1],[2,1],[3,1],[2,2],[3,2],[3,2],[4,2],[4,2],[3,3]];
+    if (n < table.length) return table[n];
+    const cols = Math.ceil(Math.sqrt(n));
+    return [cols, Math.ceil(n / cols)];
+}
+
+function applyGridLayout() {
+    const n = players.length;
+    if (n === 0) return;
+
+    const [cols, rows] = getGridDimensions(n);
+
+    // Reset any previous spanning
+    playersContainer.querySelectorAll('.player-card').forEach(c => {
+        c.style.gridColumn = '';
+    });
+
+    playersContainer.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+    playersContainer.style.gridTemplateRows    = `repeat(${rows}, 1fr)`;
+
+    // Span last-row cards when cols divides evenly into the remainder
+    // e.g. 5 players, cols=2 → last row has 1 card → spans 2 (full width)
+    //      3 players, cols=1 → last row always full → no-op
+    const lastRowCount = n % cols || cols;
+    if (lastRowCount < cols && cols % lastRowCount === 0) {
+        const span = cols / lastRowCount;
+        const cards = [...playersContainer.querySelectorAll('.player-card')];
+        cards.slice(n - lastRowCount).forEach(c => {
+            c.style.gridColumn = `span ${span}`;
+        });
+    }
+
+    // Scale score font to available card size
+    const scoreSize = n <= 2 ? 4 : n <= 4 ? 2.8 : n <= 6 ? 2.1 : 1.6;
+    playersContainer.style.setProperty('--score-size', `${scoreSize}rem`);
+}
+
 /* --- RENDER --- */
 function renderPlayers() {
     playersContainer.innerHTML = "";
@@ -118,6 +161,8 @@ function renderPlayers() {
 
         playersContainer.appendChild(card);
     });
+
+    applyGridLayout();
 }
 
 /* --- ZMIANA PUNKTÓW --- */
@@ -193,6 +238,7 @@ function startVoiceMode(playerId, cardEl) {
 addPlayerBtn.addEventListener("click", addPlayer);
 resetAllBtn.addEventListener("click", resetAll);
 fullscreenBtn.addEventListener("click", toggleFullscreen);
+window.addEventListener("resize", applyGridLayout);
 
 /* --- START --- */
 addPlayer();
