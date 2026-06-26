@@ -59,7 +59,7 @@ function parseVoiceCommand(text) {
 
     if (value === null) return null;
 
-    const add = text.includes("dodaj") || text.includes("plus");
+    const add = text.includes("dodaj") || text.includes("plus") || text.includes("podaj");
     const sub = text.includes("odejmij") || text.includes("minus");
     if (!add && !sub) return null;
     const delta = add ? +value : -value;
